@@ -1,0 +1,56 @@
+{
+  "name": "@bunit/qb",
+  "version": "0.0.0",
+  "description": "Kysely dialect for Bun's native SQL client",
+  "keywords": [
+    "bun",
+    "database",
+    "dialect",
+    "kysely",
+    "mysql",
+    "orm",
+    "postgres",
+    "query-builder",
+    "sql",
+    "sqlite"
+  ],
+  "homepage": "https://github.com/DemoMacro/BunIt#readme",
+  "bugs": {
+    "url": "https://github.com/DemoMacro/BunIt/issues"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "Demo Macro",
+    "email": "abc@imst.xyz",
+    "url": "https://www.demomacro.com/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DemoMacro/BunIt.git"
+  },
+  "files": [
+    "dist"
+  ],
+  "main": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs"
+    },
+    "./dialects/*": {
+      "types": "./dist/dialects/*.d.ts",
+      "import": "./dist/dialects/*.mjs"
+    }
+  },
+  "scripts": {
+    "dev": "built --stub",
+    "build": "built",
+    "prepack": "bun run build"
+  },
+  "dependencies": {},
+  "devDependencies": {},
+  "peerDependencies": {
+    "kysely": "^0.28.11"
+  }
+}
