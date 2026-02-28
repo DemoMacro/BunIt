@@ -8,6 +8,7 @@
 ## Packages
 
 - **[@bunit/build](./packages/build)** - Zero-config TypeScript package builder powered by Bun with dual bundle/transform modes
+- **[@bunit/storage](./packages/storage)** - Universal storage abstraction with native Bun drivers for filesystem, Redis, and S3
 
 ## Quick Start
 
@@ -41,6 +42,24 @@ export default defineBuildConfig({
     },
   ],
 });
+```
+
+### Storage
+
+```bash
+# Install
+bun add @bunit/storage unstorage
+```
+
+```typescript
+import { createStorage } from "unstorage";
+import fsDriver from "@bunit/storage/drivers/fs";
+
+const storage = createStorage({
+  driver: fsDriver({ base: "./data" }),
+});
+
+await storage.setItem("key", "value");
 ```
 
 ## Development
@@ -150,7 +169,8 @@ We welcome contributions! Here's how to get started:
 ## Support & Community
 
 - 📫 [Report Issues](https://github.com/DemoMacro/BunIt/issues)
-- 📚 [Build Package Documentation](./packages/build/README.md)
+- 📚 [Build Documentation](./packages/build/README.md)
+- 📦 [Storage Documentation](./packages/storage/README.md)
 
 ## License
 

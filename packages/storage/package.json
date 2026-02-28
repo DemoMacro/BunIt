@@ -1,8 +1,18 @@
 {
   "name": "@bunit/storage",
-  "version": "0.0.0",
-  "description": "",
-  "keywords": [],
+  "version": "0.0.1",
+  "description": "Universal storage abstraction with native Bun drivers for filesystem, Redis, and S3",
+  "keywords": [
+    "bun",
+    "cloudflare",
+    "driver",
+    "filesystem",
+    "r2",
+    "redis",
+    "s3",
+    "storage",
+    "unstorage"
+  ],
   "homepage": "https://github.com/DemoMacro/BunIt#readme",
   "bugs": {
     "url": "https://github.com/DemoMacro/BunIt/issues"

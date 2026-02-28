@@ -1,6 +1,10 @@
 # @bunit/build
 
-> ⚡️ Zero-config TypeScript package builder powered by [**Bun**](https://bun.sh).
+![npm version](https://img.shields.io/npm/v/@bunit/build)
+![npm downloads](https://img.shields.io/npm/dw/@bunit/build)
+![npm license](https://img.shields.io/npm/l/@bunit/build)
+
+> ⚡️ Bun-native implementation of [**obuild**](https://github.com/unjs/obuild) - Zero-config TypeScript package builder.
 
 ## Features
 
