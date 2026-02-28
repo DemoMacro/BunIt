@@ -8,6 +8,7 @@
 ## Packages
 
 - **[@bunit/build](./packages/build)** - Zero-config TypeScript package builder powered by Bun with dual bundle/transform modes
+- **[@bunit/qb](./packages/qb)** - Kysely dialects powered by Bun's native SQL client for PostgreSQL, MySQL, and SQLite
 - **[@bunit/storage](./packages/storage)** - Universal storage abstraction with native Bun drivers for filesystem, Redis, and S3
 
 ## Quick Start
@@ -60,6 +61,26 @@ const storage = createStorage({
 });
 
 await storage.setItem("key", "value");
+```
+
+### Query Builder
+
+```bash
+# Install
+bun add kysely @bunit/qb
+```
+
+```typescript
+import { Kysely } from "kysely";
+import { PostgresDialect } from "@bunit/qb/dialects/postgres";
+
+const db = new Kysely<Database>({
+  dialect: new PostgresDialect({
+    url: "postgres://user:pass@localhost:5432/mydb",
+  }),
+});
+
+await db.insertInto("users").values({ name: "Alice" }).execute();
 ```
 
 ## Development
@@ -171,6 +192,7 @@ We welcome contributions! Here's how to get started:
 - 📫 [Report Issues](https://github.com/DemoMacro/BunIt/issues)
 - 📚 [Build Documentation](./packages/build/README.md)
 - 📦 [Storage Documentation](./packages/storage/README.md)
+- 🔍 [Query Builder Documentation](./packages/qb/README.md)
 
 ## License
 

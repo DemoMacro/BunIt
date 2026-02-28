@@ -1,15 +1,17 @@
 {
   "name": "@bunit/qb",
   "version": "0.0.0",
-  "description": "Kysely dialect for Bun's native SQL client",
+  "description": "Kysely dialects powered by Bun's native SQL client for PostgreSQL, MySQL, and SQLite",
   "keywords": [
     "bun",
     "database",
     "dialect",
     "kysely",
+    "mariadb",
     "mysql",
     "orm",
     "postgres",
+    "postgresql",
     "query-builder",
     "sql",
     "sqlite"
