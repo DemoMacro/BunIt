@@ -1,115 +1,140 @@
 import { defineDriver, normalizeKey } from "unstorage";
-import { S3Client } from "bun";
+import type { Driver, GetKeysOptions, StorageMeta, TransactionOptions } from "unstorage";
+import { S3Client, type S3Options } from "bun";
 
-export interface S3DriverOptions {
-  /**
-   * Access Key ID for S3.
-   */
-  accessKeyId: string;
-
-  /**
-   * Secret Access Key for S3.
-   */
-  secretAccessKey: string;
-
-  /**
-   * The endpoint URL of the S3 service.
-   *
-   * - For AWS S3: "https://s3.[region].amazonaws.com"
-   * - For Cloudflare R2: "https://[uid].r2.cloudflarestorage.com"
-   * - For DigitalOcean Spaces: "https://[region].digitaloceanspaces.com"
-   * - For MinIO: "http://localhost:9000"
-   */
-  endpoint?: string;
-
-  /**
-   * The region of the S3 bucket.
-   */
-  region?: string;
-
-  /**
-   * The name of the bucket.
-   */
-  bucket: string;
-
+export interface S3DriverOptions extends S3Options {
   /**
    * Optional prefix to use for all keys.
    */
   base?: string;
-
-  /**
-   * Session token for temporary credentials.
-   */
-  sessionToken?: string;
-
-  /**
-   * ACL for uploaded objects (e.g., "public-read").
-   */
-  acl?: string;
 }
 
-export default defineDriver((options: S3DriverOptions) => {
-  const client = new S3Client({
-    accessKeyId: options.accessKeyId,
-    secretAccessKey: options.secretAccessKey,
-    bucket: options.bucket,
-    endpoint: options.endpoint,
-    region: options.region,
-    sessionToken: options.sessionToken,
-    acl: options.acl,
-  });
+export default defineDriver((options: S3DriverOptions): Driver<S3DriverOptions, S3Client> => {
+  let client: S3Client | undefined;
+
+  const getClient = () => {
+    if (!client) {
+      client = new S3Client(options);
+    }
+    return client;
+  };
 
   const base = (options.base || "").replace(/\/$/, "");
   const p = (key: string) => (base ? `${base}/${normalizeKey(key)}` : normalizeKey(key));
+  const d = (key: string) => (base ? key.replace(`${base}/`, "") : key);
 
   return {
     name: "s3",
     options,
-    async hasItem(key: string) {
-      const file = client.file(p(key));
+    getInstance: getClient,
+    async hasItem(key: string, _opts: TransactionOptions) {
       try {
+        const file = getClient().file(p(key));
         await file.exists();
         return true;
       } catch {
         return false;
       }
     },
-    async getItem(key: string) {
-      const file = client.file(p(key));
+    async getItem(key: string, _opts?: TransactionOptions) {
       try {
+        const file = getClient().file(p(key));
         return await file.text();
       } catch {
         return null;
       }
     },
-    async setItem(key: string, value: string) {
-      const file = client.file(p(key));
+    async getItemRaw(key: string, _opts: TransactionOptions) {
+      try {
+        const file = getClient().file(p(key));
+        return await file.bytes();
+      } catch {
+        return null;
+      }
+    },
+    async setItem(key: string, value: string, _opts: TransactionOptions) {
+      const file = getClient().file(p(key));
       await file.write(value);
     },
-    async removeItem(key: string) {
-      const file = client.file(p(key));
+    async setItemRaw(
+      key: string,
+      value: ArrayBuffer | Uint8Array | string,
+      _opts: TransactionOptions,
+    ) {
+      const file = getClient().file(p(key));
+      await file.write(value);
+    },
+    async removeItem(key: string, _opts: TransactionOptions) {
+      const file = getClient().file(p(key));
       await file.delete();
     },
-    async getKeys() {
-      // Bun S3Client doesn't have built-in list operation
-      // This is a limitation - users may need to implement list operation
-      // or use a different approach for their use case
-      console.warn(
-        "[s3 driver] getKeys() is not fully implemented. " +
-          "Bun's S3Client doesn't support listing objects. " +
-          "Consider using AWS SDK or implementing custom list logic.",
-      );
-      return [];
+    async getMeta(key: string, _opts: TransactionOptions): Promise<StorageMeta | null> {
+      try {
+        const result = await S3Client.list({ prefix: p(key) }, options);
+        if (result.contents && result.contents.length > 0) {
+          const object = result.contents[0];
+          return {
+            size: object.size,
+            mtime: object.lastModified ? new Date(object.lastModified) : undefined,
+            etag: object.eTag,
+          };
+        }
+        return null;
+      } catch {
+        return null;
+      }
     },
-    async clear() {
-      console.warn(
-        "[s3 driver] clear() is not fully implemented. " +
-          "Bun's S3Client doesn't support listing objects. " +
-          "Consider using AWS SDK or implementing custom list logic.",
+    async getKeys(baseKey: string, _opts?: GetKeysOptions) {
+      const keys: string[] = [];
+      let startAfter: string | undefined = undefined;
+      const prefix = p(baseKey || "");
+      let hasMore = true;
+
+      while (hasMore) {
+        const result = await S3Client.list(
+          {
+            prefix,
+            startAfter,
+            maxKeys: 1000,
+          },
+          options,
+        );
+
+        if (result.contents) {
+          for (const object of result.contents) {
+            // Remove prefix to get relative key
+            const relativeKey = d(object.key);
+            // Normalize the key
+            keys.push(normalizeKey(relativeKey));
+          }
+        }
+
+        // Check if there are more results
+        if (result.isTruncated && result.contents && result.contents.length > 0) {
+          startAfter = result.contents[result.contents.length - 1].key;
+        } else {
+          hasMore = false;
+        }
+      }
+
+      return keys;
+    },
+    async clear(baseKey: string, _opts: TransactionOptions) {
+      const keys = await this.getKeys(baseKey, _opts);
+      if (keys.length === 0) {
+        return;
+      }
+
+      // Delete all objects
+      await Promise.allSettled(
+        keys.map(async (key) => {
+          const file = getClient().file(p(key));
+          await file.delete();
+        }),
       );
     },
     async dispose() {
-      // No cleanup needed for S3Client
+      client = undefined;
     },
   };
 });
