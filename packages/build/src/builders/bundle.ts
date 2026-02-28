@@ -68,7 +68,7 @@ export async function bunBuild(
     minify: entry.minify ?? false,
     naming: {
       entry: "[name].mjs",
-      chunk: "_chunks/[name].mjs",
+      chunk: "_chunks/[name]-[hash].mjs",
     },
     splitting: true,
     metafile: true,
