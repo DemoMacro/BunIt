@@ -1,0 +1,49 @@
+{
+  "name": "@bunit/storage",
+  "version": "0.0.0",
+  "description": "",
+  "keywords": [],
+  "homepage": "https://github.com/DemoMacro/BunIt#readme",
+  "bugs": {
+    "url": "https://github.com/DemoMacro/BunIt/issues"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "Demo Macro",
+    "email": "abc@imst.xyz",
+    "url": "https://www.demomacro.com/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DemoMacro/BunIt.git"
+  },
+  "files": [
+    "dist"
+  ],
+  "main": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs"
+    },
+    "./server": {
+      "types": "./dist/server.d.ts",
+      "import": "./dist/server.mjs"
+    },
+    "./drivers/*": {
+      "types": "./dist/drivers/*.d.ts",
+      "import": "./dist/drivers/*.mjs"
+    }
+  },
+  "scripts": {
+    "dev": "built --stub",
+    "build": "built",
+    "prepack": "bun run build"
+  },
+  "dependencies": {},
+  "devDependencies": {},
+  "peerDependencies": {
+    "unstorage": "^1.17.4"
+  }
+}
