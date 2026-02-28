@@ -1,8 +1,12 @@
-import type { DatabaseIntrospector, Dialect, DialectAdapter, Driver, QueryCompiler } from "kysely";
-import { MysqlAdapter } from "kysely";
-import { MysqlIntrospector } from "kysely";
-import { MysqlQueryCompiler } from "kysely";
-import type { Kysely } from "kysely";
+import type {
+  Kysely,
+  DatabaseIntrospector,
+  Dialect,
+  DialectAdapter,
+  Driver,
+  QueryCompiler,
+} from "kysely";
+import { MysqlAdapter, MysqlIntrospector, MysqlQueryCompiler } from "kysely";
 import type { BunSQLDialectConfig } from "../types";
 import { BunSQLDriver } from "../sql";
 

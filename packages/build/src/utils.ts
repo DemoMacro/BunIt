@@ -1,5 +1,14 @@
 import { resolve } from "node:path";
 
+export function detectExports(sourceText: string) {
+  const transpiler = new Bun.Transpiler({ loader: "ts" });
+  const scanResult = transpiler.scan(sourceText);
+  return {
+    hasDefault: scanResult.exports.includes("default"),
+    exports: scanResult.exports,
+  };
+}
+
 export function fmtPath(path: string, cwd?: string): string {
   const resolved = resolve(path);
   const base = cwd || process.cwd();

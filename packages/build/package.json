@@ -1,6 +1,6 @@
 {
   "name": "@bunit/build",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "A blazing-fast build tool powered by Bun for TypeScript libraries with flexible bundling and transformation modes",
   "keywords": [
     "build",

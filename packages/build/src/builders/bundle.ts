@@ -1,7 +1,7 @@
 import { builtinModules } from "node:module";
 import { mkdir, chmod } from "node:fs/promises";
-import { dirname, relative, join, basename, extname, resolve } from "node:path";
-import { fmtPath } from "../utils";
+import { dirname, relative, join, basename, extname, resolve, sep } from "node:path";
+import { fmtPath, detectExports } from "../utils";
 import UnpluginIsolatedDecl from "unplugin-isolated-decl/esbuild";
 import prettyBytes from "pretty-bytes";
 
@@ -22,9 +22,7 @@ export async function bunBuild(
       const srcContents = await Bun.file(srcPath).text();
 
       // Use Bun.Transpiler.scan to accurately detect exports
-      const transpiler = new Bun.Transpiler({ loader: "ts" });
-      const scanResult = transpiler.scan(srcContents);
-      const hasDefaultExport = scanResult.exports.includes("default");
+      const { hasDefault: hasDefaultExport } = detectExports(srcContents);
 
       const firstLine = srcContents.split("\n")[0];
       const hasShebangLine = firstLine.startsWith("#!");
@@ -92,14 +90,18 @@ export async function bunBuild(
 
   await hooks.bunOutput?.(bunConfig, ctx);
 
+  if (!result.metafile) {
+    throw new Error("Build failed: metafile not generated");
+  }
+
   const outputEntries = [];
 
   // Use metafile for faster analysis without reading file contents
-  for (const [path, meta] of Object.entries(result.metafile!.outputs)) {
+  for (const [path, meta] of Object.entries(result.metafile.outputs)) {
     if (!meta.entryPoint) continue; // Skip non-entry points (chunks, sourcemaps)
     if (path.endsWith(".ts")) continue;
 
-    const fileName = path.replace(`${bunConfig.outdir}${require("node:path").sep}`, "");
+    const fileName = path.replace(`${bunConfig.outdir}${sep}`, "");
 
     // Extract exports from metafile (array of strings)
     const exports = meta.exports || [];

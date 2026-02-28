@@ -4,7 +4,7 @@ import { mkdir, symlink, chmod } from "node:fs/promises";
 import { dirname, extname, join, relative } from "node:path";
 import { Glob } from "bun";
 import ts from "typescript";
-import { fmtPath } from "../utils";
+import { fmtPath, detectExports } from "../utils";
 
 const SHEBANG_RE = /^#![^\n]*/;
 
@@ -42,8 +42,8 @@ export async function transformDir(ctx: BuildContext, entry: TransformEntry): Pr
               const entryDistPath = join(entry.outDir!, entryName);
               await mkdir(dirname(entryDistPath), { recursive: true });
               if (entry.stub) {
-                await symlink(entryPath, entryDistPath, "junction").catch(() => {
-                  /* exists */
+                await symlink(entryPath, entryDistPath, "junction").catch((err) => {
+                  if (err.code !== "EEXIST") throw err;
                 });
               } else {
                 const code = await Bun.file(entryPath).text();
@@ -93,7 +93,7 @@ export async function transformDir(ctx: BuildContext, entry: TransformEntry): Pr
 
   // Generate type declarations for .ts files if dts is enabled
   if (entry.dts !== false) {
-    await generateDeclarations(entry);
+    await generateDeclarations(ctx, entry);
   }
 
   console.log(
@@ -131,9 +131,7 @@ export async function transformModule(
 
   // Stub mode: re-export from source
   if (entry.stub) {
-    const transpiler = new Bun.Transpiler({ loader: "ts" });
-    const scanResult = transpiler.scan(sourceText);
-    const hasDefaultExport = scanResult.exports.includes("default");
+    const { hasDefault: hasDefaultExport } = detectExports(sourceText);
 
     let relativePath = relative(dirname(entryDistPath), entryPath);
     // Normalize path separators to forward slashes for cross-platform compatibility
@@ -158,7 +156,10 @@ export async function transformModule(
 /**
  * Generate type declarations using TypeScript Compiler API.
  */
-export async function generateDeclarations(entry: TransformEntry): Promise<void> {
+export async function generateDeclarations(
+  ctx: BuildContext,
+  entry: TransformEntry,
+): Promise<void> {
   // Find all .ts source files
   const tsFiles: string[] = [];
   const glob = new Glob("**/*.ts");
@@ -176,6 +177,7 @@ export async function generateDeclarations(entry: TransformEntry): Promise<void>
     declaration: true,
     emitDeclarationOnly: true,
     skipLibCheck: true,
+    rootDir: entry.input,
     outDir: entry.outDir,
     module: ts.ModuleKind.ESNext,
     target: ts.ScriptTarget.ESNext,
@@ -183,14 +185,34 @@ export async function generateDeclarations(entry: TransformEntry): Promise<void>
     declarationMap: false,
   };
 
-  // Create TypeScript program
-  const host = ts.createCompilerHost(compilerOptions);
-  const program = ts.createProgram(tsFiles, compilerOptions, host);
+  // Resolve entry.input to absolute path for filtering
+  let inputDir = entry.input;
+  const isAbsolute = inputDir.startsWith("/") || /^[a-zA-Z]:/.test(inputDir);
+  if (!isAbsolute) {
+    inputDir = join(ctx.pkgDir, entry.input);
+  }
 
-  // Emit declarations
+  // Normalize inputDir for consistent comparison
+  const normalizedInputDir = inputDir.replace(/\\/g, "/");
+
+  // Create compiler host with filtered writeFile
+  const host = ts.createCompilerHost(compilerOptions);
+  const originalWriteFile = host.writeFile;
+  host.writeFile = (fileName, content, writeByteOrderMark, onError, sourceFiles) => {
+    const sourceFile = sourceFiles?.[0];
+    if (!sourceFile) return;
+
+    // Only emit declarations for files within entry.input directory
+    const normalizedFileName = sourceFile.fileName.replace(/\\/g, "/");
+    if (normalizedFileName.startsWith(normalizedInputDir)) {
+      originalWriteFile(fileName, content, writeByteOrderMark, onError, sourceFiles);
+    }
+  };
+
+  const program = ts.createProgram(tsFiles, compilerOptions, host);
   const emitResult = program.emit();
 
-  // Check for errors
+  // Report errors
   const diagnostics = emitResult.diagnostics;
   if (diagnostics.length > 0) {
     const errors = diagnostics.filter((d) => d.category === ts.DiagnosticCategory.Error);

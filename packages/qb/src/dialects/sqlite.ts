@@ -1,8 +1,12 @@
-import type { DatabaseIntrospector, Dialect, DialectAdapter, Driver, QueryCompiler } from "kysely";
-import { SqliteAdapter } from "kysely";
-import { SqliteIntrospector } from "kysely";
-import { SqliteQueryCompiler } from "kysely";
-import type { Kysely } from "kysely";
+import type {
+  Kysely,
+  DatabaseIntrospector,
+  Dialect,
+  DialectAdapter,
+  Driver,
+  QueryCompiler,
+} from "kysely";
+import { SqliteAdapter, SqliteIntrospector, SqliteQueryCompiler } from "kysely";
 import type { BunSQLDialectConfig } from "../types";
 import { BunSQLDriver } from "../sql";
 
