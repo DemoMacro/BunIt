@@ -1,6 +1,6 @@
 {
   "name": "@bunit/build",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A blazing-fast build tool powered by Bun for TypeScript libraries with flexible bundling and transformation modes",
   "keywords": [
     "build",
@@ -39,6 +39,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs"
+    },
+    "./config": {
+      "types": "./dist/config.d.ts",
+      "import": "./dist/config.mjs"
     }
   },
   "scripts": {
