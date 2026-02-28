@@ -26,6 +26,9 @@
         "pretty-bytes": "7.1.0",
         "unplugin-isolated-decl": "0.15.7",
       },
+      "devDependencies": {
+        "typescript": "5.9.3",
+      },
     },
     "packages/storage": {
       "name": "@bunit/storage",

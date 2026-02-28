@@ -3,6 +3,7 @@ import type { BuildContext, TransformEntry } from "../types";
 import { mkdir, symlink, chmod } from "node:fs/promises";
 import { dirname, extname, join, relative } from "node:path";
 import { Glob } from "bun";
+import ts from "typescript";
 import { fmtPath } from "../utils";
 
 const SHEBANG_RE = /^#![^\n]*/;
@@ -26,7 +27,7 @@ export async function transformDir(ctx: BuildContext, entry: TransformEntry): Pr
           case ".ts": {
             {
               const entryDistPath = join(entry.outDir!, entryName.replace(/\.ts$/, ".mjs"));
-              const code = await transformModule(entryPath, entry, entryDistPath);
+              const code = await transformModule(entryPath, entryDistPath, entry);
               await mkdir(dirname(entryDistPath), { recursive: true });
               await Bun.write(entryDistPath, code);
 
@@ -90,12 +91,20 @@ export async function transformDir(ctx: BuildContext, entry: TransformEntry): Pr
     .filter((result): result is PromiseFulfilledResult<string> => result.status === "fulfilled")
     .map((result) => result.value);
 
+  // Generate type declarations for .ts files if dts is enabled
+  if (entry.dts !== false) {
+    await generateDeclarations(entry);
+  }
+
   console.log(
     `\n[transform] ${fmtPath(entry.outDir! + "/")}${entry.stub ? " (stub)" : ""}\n${itemsTable(writtenFiles.map((f) => fmtPath(f)))}`,
   );
 }
 
-function itemsTable(items: string[], consoleWidth: number = process.stdout.columns || 80): string {
+export function itemsTable(
+  items: string[],
+  consoleWidth: number = process.stdout.columns || 80,
+): string {
   if (items.length === 0) {
     return "";
   }
@@ -113,10 +122,10 @@ function itemsTable(items: string[], consoleWidth: number = process.stdout.colum
 /**
  * Transform a .ts module using Bun.Transpiler.
  */
-async function transformModule(
+export async function transformModule(
   entryPath: string,
-  entry: TransformEntry,
   entryDistPath: string,
+  entry: TransformEntry,
 ): Promise<string> {
   const sourceText = await Bun.file(entryPath).text();
 
@@ -144,4 +153,61 @@ async function transformModule(
 
   const transpiler = new Bun.Transpiler(transpilerOptions);
   return transpiler.transformSync(sourceText);
+}
+
+/**
+ * Generate type declarations using TypeScript Compiler API.
+ */
+export async function generateDeclarations(entry: TransformEntry): Promise<void> {
+  // Find all .ts source files
+  const tsFiles: string[] = [];
+  const glob = new Glob("**/*.ts");
+  for await (const file of glob.scan(entry.input)) {
+    const tsFile = join(entry.input, file);
+    tsFiles.push(tsFile);
+  }
+
+  if (tsFiles.length === 0) {
+    return;
+  }
+
+  // Create TypeScript compiler options
+  const compilerOptions: ts.CompilerOptions = {
+    declaration: true,
+    emitDeclarationOnly: true,
+    skipLibCheck: true,
+    outDir: entry.outDir,
+    module: ts.ModuleKind.ESNext,
+    target: ts.ScriptTarget.ESNext,
+    moduleResolution: ts.ModuleResolutionKind.Bundler,
+    declarationMap: false,
+  };
+
+  // Create TypeScript program
+  const host = ts.createCompilerHost(compilerOptions);
+  const program = ts.createProgram(tsFiles, compilerOptions, host);
+
+  // Emit declarations
+  const emitResult = program.emit();
+
+  // Check for errors
+  const diagnostics = emitResult.diagnostics;
+  if (diagnostics.length > 0) {
+    const errors = diagnostics.filter((d) => d.category === ts.DiagnosticCategory.Error);
+    if (errors.length > 0) {
+      console.warn(`[transform] Type declaration generation had ${errors.length} error(s):`);
+      for (const error of errors) {
+        const message = ts.flattenDiagnosticMessageText(error.messageText, "\n");
+        if (error.file) {
+          const { line, character } = ts.getLineAndCharacterOfPosition(
+            error.file,
+            error.start || 0,
+          );
+          console.warn(`  ${error.file.fileName}:${line + 1}:${character + 1}: ${message}`);
+        } else {
+          console.warn(`  ${message}`);
+        }
+      }
+    }
+  }
 }
