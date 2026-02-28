@@ -1,0 +1,56 @@
+{
+  "name": "@bunit/build",
+  "version": "0.0.0",
+  "description": "A blazing-fast build tool powered by Bun for TypeScript libraries with flexible bundling and transformation modes",
+  "keywords": [
+    "build",
+    "bun",
+    "bundle",
+    "bundler",
+    "library",
+    "package",
+    "tooling",
+    "transform",
+    "typescript"
+  ],
+  "homepage": "https://github.com/DemoMacro/BunIt#readme",
+  "bugs": {
+    "url": "https://github.com/DemoMacro/BunIt/issues"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "Demo Macro",
+    "email": "abc@imst.xyz",
+    "url": "https://www.demomacro.com/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DemoMacro/BunIt.git"
+  },
+  "bin": {
+    "built": "dist/cli.mjs"
+  },
+  "files": [
+    "dist"
+  ],
+  "main": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs"
+    }
+  },
+  "scripts": {
+    "dev": "bun run src/cli.ts --stub",
+    "build": "bun run src/cli.ts",
+    "prepack": "bun run build"
+  },
+  "dependencies": {
+    "c12": "4.0.0-beta.3",
+    "citty": "0.2.1",
+    "pretty-bytes": "7.1.0",
+    "unplugin-isolated-decl": "0.15.7"
+  },
+  "devDependencies": {}
+}
