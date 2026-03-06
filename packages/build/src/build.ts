@@ -1,94 +1,132 @@
-import type { BuildContext, BuildConfig, TransformEntry, BundleEntry } from "./types";
+import type { BuildConfig as BunBuildConfig } from "bun";
 
-import { fileURLToPath, pathToFileURL } from "node:url";
-import { isAbsolute, join, resolve } from "node:path";
 import { rm } from "node:fs/promises";
-import { bunBuild } from "./builders/bundle";
-import { transformDir } from "./builders/transform";
-import { fmtPath, analyzeDir } from "./utils";
+import { resolve, relative } from "pathe";
+import { readPackageJSON } from "pkg-types";
+import { consola } from "consola";
 import prettyBytes from "pretty-bytes";
+import UnpluginIsolatedDecl from "unplugin-isolated-decl/esbuild";
+import { defu } from "defu";
+
+import type { BuildContext, BuildConfig, BuildEntry } from "./types";
+import { buildStub } from "./stub";
+import { normalizeEntries, collectOutDirs, expandGlobs } from "./utils";
+
+const DEFAULT_BUILD_OPTIONS: Partial<BunBuildConfig> = {
+  target: "bun",
+  format: "esm",
+  naming: {
+    entry: "[name].mjs",
+    chunk: "_chunks/[name]-[hash].mjs",
+  },
+  splitting: true,
+  metafile: true,
+};
 
 /**
- * Build dist/ from src/
+ * Main build function
  */
 export async function build(config: BuildConfig): Promise<void> {
   const start = Date.now();
 
-  const pkgDir = normalizePath(config.cwd);
-  const pkg = await readJSON(join(pkgDir, "package.json")).catch(() => ({}));
-  const ctx: BuildContext = { pkg, pkgDir };
+  const pkgDir = resolve(config.cwd ? String(config.cwd) : process.cwd());
+  const pkg = await readPackageJSON(pkgDir);
+  const ctx: BuildContext = { pkgDir, pkg };
 
-  console.log(`Building \`${ctx.pkg.name || "<no name>"}\` (\`${ctx.pkgDir}\`)`);
+  consola.start(`Building \`${pkg.name || "<no name>"}\``);
 
-  const hooks = config.hooks || {};
+  await config.hooks?.start?.(ctx);
 
-  await hooks.start?.(ctx);
+  const entries = await normalizeEntries(config.entries || [], pkgDir);
+  const outDirs = await collectOutDirs(entries);
 
-  const entries = (config.entries || []).map((rawEntry) => {
-    let entry: TransformEntry | BundleEntry;
-
-    if (typeof rawEntry === "string") {
-      const [input, outDir] = rawEntry.split(":") as [string, string | undefined];
-      entry = input.endsWith("/")
-        ? ({ type: "transform", input, outDir } as TransformEntry)
-        : ({ type: "bundle", input: input.split(","), outDir } as BundleEntry);
-    } else {
-      entry = rawEntry;
-    }
-
-    if (!entry.input) {
-      throw new Error(`Build entry missing \`input\`: ${JSON.stringify(entry, null, 2)}`);
-    }
-    entry = { ...entry };
-    entry.outDir = normalizePath(entry.outDir || "dist", pkgDir);
-    entry.input = Array.isArray(entry.input)
-      ? entry.input.map((p) => normalizePath(p, pkgDir))
-      : normalizePath(entry.input, pkgDir);
-    return entry;
-  });
-
-  await hooks.entries?.(entries, ctx);
-
-  const outDirs: Array<string> = [];
-  for (const outDir of entries
-    .map((e) => e.outDir)
-    .sort((a, b) => (a ?? "").localeCompare(b ?? "")) as string[]) {
-    if (!outDirs.some((dir) => outDir.startsWith(dir))) {
-      outDirs.push(outDir);
-    }
-  }
+  // Clean output directories
   for (const outDir of outDirs) {
-    console.log(`Cleaning up \`${fmtPath(outDir)}\``);
+    consola.info(`Cleaning up \`${outDir}\``);
     await rm(outDir, { recursive: true, force: true });
   }
 
+  // Build each entry
   for (const entry of entries) {
-    await (entry.type === "bundle" ? bunBuild(ctx, entry, hooks) : transformDir(ctx, entry));
+    if (entry.stub) {
+      await buildStub(ctx, entry);
+    } else {
+      await buildBundle(ctx, entry);
+    }
   }
 
-  await hooks.end?.(ctx);
+  await config.hooks?.end?.(ctx);
 
-  if (!entries.every((e) => e.stub)) {
-    const dirSize = analyzeDir(outDirs);
-    console.log(`\nΣ Total dist byte size: ${prettyBytes(dirSize.size)} (${dirSize.files} files)`);
+  consola.success(`Build complete in ${Date.now() - start}ms`);
+  consola.success(`built finished in ${Date.now() - start}ms`);
+}
+
+/**
+ * Build using Bun.build
+ */
+export async function buildBundle(ctx: BuildContext, entry: BuildEntry): Promise<void> {
+  const entrypoints = await expandGlobs(entry.entrypoints, ctx.pkgDir);
+  const outdir = entry.outdir || resolve(ctx.pkgDir, "dist");
+
+  // Build external dependencies list
+  // Note: Bun automatically handles Node.js builtin modules as external
+  const external = [
+    ...Object.keys(ctx.pkg.dependencies || {}),
+    ...Object.keys(ctx.pkg.peerDependencies || {}),
+  ];
+
+  // Determine if dts generation is enabled (default: true)
+  const dtsEnabled = entry.dts !== false;
+
+  // Create Bun build config
+  const bunConfig: BunBuildConfig = defu(
+    {
+      root: ctx.pkgDir,
+      entrypoints,
+      outdir,
+      external,
+      ...(dtsEnabled
+        ? {
+            plugins: [
+              UnpluginIsolatedDecl({
+                inputBase: resolve(ctx.pkgDir, "src"),
+              }),
+            ],
+          }
+        : {}),
+    },
+    DEFAULT_BUILD_OPTIONS,
+  );
+
+  // Apply additional user config (excluding entrypoints, stub, dts)
+  const {
+    entrypoints: _,
+    stub: __,
+    dts: ___,
+    ...userConfig
+  } = entry as unknown as BunBuildConfig & { stub?: boolean; dts?: boolean };
+  Object.assign(bunConfig, userConfig);
+
+  const result = await Bun.build(bunConfig);
+
+  if (!result.success) {
+    for (const log of result.logs) {
+      if (log.level === "error") {
+        consola.error(log.message);
+      }
+    }
+    throw new Error("Build failed");
   }
 
-  console.log(`\nbuild finished in ${Date.now() - start}ms`);
-}
+  // Display build results
+  if (result.metafile) {
+    for (const [filePath, meta] of Object.entries(result.metafile.outputs)) {
+      if (!meta.entryPoint) continue;
+      if (filePath.endsWith(".map")) continue;
 
-// --- utils
-
-function normalizePath(path: string | URL | undefined, resolveFrom?: string) {
-  return typeof path === "string" && isAbsolute(path)
-    ? path
-    : path instanceof URL
-      ? fileURLToPath(path)
-      : resolve(resolveFrom || ".", path || ".");
-}
-
-function readJSON(specifier: string) {
-  const pkgPath = isAbsolute(specifier) ? pathToFileURL(specifier).href : specifier;
-  return import(pkgPath, {
-    with: { type: "json" },
-  }).then((r) => r.default);
+      const fileName = filePath.split("/").pop()!;
+      const displayPath = relative(process.cwd(), resolve(outdir, fileName)).replace(/\\/g, "/");
+      consola.info(`${displayPath} (${prettyBytes(meta.bytes)})`);
+    }
+  }
 }

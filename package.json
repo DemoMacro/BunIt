@@ -1,6 +1,6 @@
 {
   "name": "@bunit/monorepo",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "private": true,
   "description": "A collection of high-performance tools and utilities exclusively built for the Bun ecosystem",
   "keywords": [
@@ -39,9 +39,9 @@
   },
   "devDependencies": {
     "@bunit/build": "workspace:*",
-    "@funish/basis": "0.2.8",
-    "@types/bun": "1.3.9",
-    "@types/node": "25.3.2",
+    "@funish/basis": "0.2.10",
+    "@types/bun": "1.3.10",
+    "@types/node": "25.3.5",
     "obuild": "0.4.31"
   }
 }

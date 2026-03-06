@@ -3,9 +3,12 @@ import { defineBuildConfig } from "./src/config";
 export default defineBuildConfig({
   entries: [
     {
-      type: "bundle",
-      input: ["./src/index.ts", "./src/config.ts", "./src/cli.ts"],
-      minify: true,
+      entrypoints: ["./src/index.ts", "./src/config.ts", "./src/cli.ts"],
+      outdir: "dist",
+      naming: {
+        entry: "[name].mjs",
+        chunk: "_chunks/[name]-[hash].mjs",
+      },
     },
   ],
 });
