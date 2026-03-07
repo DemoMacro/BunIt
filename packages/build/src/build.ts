@@ -87,11 +87,7 @@ export async function buildBundle(ctx: BuildContext, entry: BuildEntry): Promise
       external,
       ...(dtsEnabled
         ? {
-            plugins: [
-              UnpluginIsolatedDecl({
-                inputBase: resolve(ctx.pkgDir, "src"),
-              }),
-            ],
+            plugins: [UnpluginIsolatedDecl()],
           }
         : {}),
     },

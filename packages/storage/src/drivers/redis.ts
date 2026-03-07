@@ -21,7 +21,9 @@ export interface RedisDriverOptions extends RedisOptions {
   ttl?: number;
 }
 
-export default defineDriver(
+type RedisDriverFactory = ReturnType<typeof defineDriver<RedisDriverOptions, RedisClient>>;
+
+const redisDriver: RedisDriverFactory = defineDriver(
   (options: RedisDriverOptions = {}): Driver<RedisDriverOptions, RedisClient> => {
     let client: RedisClient | undefined;
 
@@ -139,3 +141,5 @@ export default defineDriver(
     };
   },
 );
+
+export default redisDriver;

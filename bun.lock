@@ -6,7 +6,7 @@
       "name": "@bunit/monorepo",
       "devDependencies": {
         "@bunit/build": "workspace:*",
-        "@funish/basis": "0.2.10",
+        "@funish/basis": "0.2.13",
         "@types/bun": "1.3.10",
         "@types/node": "25.3.5",
         "obuild": "0.4.31",
@@ -14,35 +14,35 @@
     },
     "packages/build": {
       "name": "@bunit/build",
-      "version": "0.0.4",
+      "version": "0.0.5",
       "bin": {
         "built": "dist/cli.mjs",
       },
       "dependencies": {
-        "c12": "4.0.0-beta.3",
-        "citty": "0.2.1",
-        "consola": "3.4.2",
-        "defu": "6.1.4",
-        "pathe": "2.0.3",
-        "pkg-types": "^2.3.0",
-        "pretty-bytes": "7.1.0",
-        "unplugin-isolated-decl": "0.15.7",
-        "unplugin-oxc": "^0.5.7",
+        "c12": "latest",
+        "citty": "latest",
+        "consola": "latest",
+        "defu": "latest",
+        "pathe": "latest",
+        "pkg-types": "latest",
+        "pretty-bytes": "latest",
+        "unplugin-isolated-decl": "latest",
+        "unplugin-oxc": "latest",
       },
       "devDependencies": {
-        "typescript": "5.9.3",
+        "typescript": "latest",
       },
     },
     "packages/qb": {
       "name": "@bunit/qb",
-      "version": "0.0.1",
+      "version": "0.0.2",
       "peerDependencies": {
         "kysely": "^0.28.11",
       },
     },
     "packages/storage": {
       "name": "@bunit/storage",
-      "version": "0.0.2",
+      "version": "0.0.3",
       "peerDependencies": {
         "unstorage": "^1.17.4",
       },
@@ -71,9 +71,11 @@
 
     "@emnapi/wasi-threads": ["@emnapi/wasi-threads@1.1.0", "", { "dependencies": { "tslib": "^2.4.0" } }, "sha512-WI0DdZ8xFSbgMjR1sFsKABJ/C5OnRrjT06JXbZKexJGrDuPTzZdDYfFlsgcCXCyf+suG5QU2e/y1Wo2V/OapLQ=="],
 
-    "@funish/basis": ["@funish/basis@0.2.10", "", { "dependencies": { "@funish/build": "0.1.0", "c12": "4.0.0-beta.3", "citty": "0.2.1", "consola": "3.4.2", "defu": "6.1.4", "dugite": "3.2.0", "jiti": "2.6.1", "nypm": "0.6.5", "oxfmt": "0.36.0", "oxlint": "1.51.0", "oxlint-tsgolint": "0.15.0", "pathe": "2.0.3", "picomatch": "4.0.3", "pkg-types": "2.3.0", "semver": "7.7.4", "tinyglobby": "0.2.15" }, "bin": { "basis": "dist/cli/basis.mjs", "oxfmt": "dist/cli/oxfmt.mjs", "oxlint": "dist/cli/oxlint.mjs", "tsgolint": "dist/cli/tsgolint.mjs" } }, "sha512-6cmrcng1U19tfbkaIUd9r3c4HX+NORYKF9BMahmsDr4stfeE09sxhf7x7INlYowIJHG1DUz/0nbeuaOIRq1hhA=="],
+    "@funish/basis": ["@funish/basis@0.2.13", "", { "dependencies": { "@funish/build": "0.1.1", "@funish/process": "0.0.0", "c12": "4.0.0-beta.3", "citty": "0.2.1", "consola": "3.4.2", "defu": "6.1.4", "dugite": "3.2.0", "jiti": "2.6.1", "nypm": "0.6.5", "oxfmt": "0.36.0", "oxlint": "1.51.0", "oxlint-tsgolint": "0.15.0", "pathe": "2.0.3", "picomatch": "4.0.3", "pkg-types": "2.3.0", "semver": "7.7.4", "tinyglobby": "0.2.15" }, "bin": { "basis": "dist/cli/basis.mjs", "oxfmt": "dist/cli/oxfmt.mjs", "oxlint": "dist/cli/oxlint.mjs", "tsgolint": "dist/cli/tsgolint.mjs" } }, "sha512-Fy4p0rag6TMWPF4RbJE8hqhWoO3JApGZ4zjyK44gvW3WbjwOHmnAWF7BWmhJq0a4Sc7972yZ8edCvy/QQqDRPw=="],
 
-    "@funish/build": ["@funish/build@0.1.0", "", { "dependencies": { "c12": "4.0.0-beta.3", "citty": "0.2.1", "consola": "3.4.2", "defu": "6.1.4", "jiti": "2.6.1", "mlly": "1.8.0", "pathe": "2.0.3", "pkg-types": "1.3.1", "pretty-bytes": "7.1.0", "tinyglobby": "0.2.15", "tsdown": "0.20.3" }, "bin": { "isbuild": "dist/cli.mjs" } }, "sha512-3fO28fmwgdBQb8qivKs4SmNtDXoLlaOOCtPgI37rCg07bBS/tEv09LJpBnCUDdU7koDl03hemkPIWj3PquodSw=="],
+    "@funish/build": ["@funish/build@0.1.1", "", { "dependencies": { "c12": "4.0.0-beta.3", "citty": "0.2.1", "consola": "3.4.2", "defu": "6.1.4", "jiti": "2.6.1", "mlly": "1.8.0", "pathe": "2.0.3", "pkg-types": "1.3.1", "pretty-bytes": "7.1.0", "tinyglobby": "0.2.15", "tsdown": "0.20.3" }, "bin": { "isbuild": "dist/cli.mjs" } }, "sha512-uwVsab1c34arRiuXcOUpN93WWUbwWuxiT0hWIyG3bMCVIKrqbHpd7UWaSWcPGFYdzctzpzulHRgxbWsD5NEP6w=="],
+
+    "@funish/process": ["@funish/process@0.0.0", "", { "dependencies": { "std-env": "4.0.0-rc.1" } }, "sha512-AhX3IknbiFSucPuS+DdBtq0CrKB1asFz19tQeb0hzhuh2QJPTXTJa8NYH1Gn9wl/owtxgv9svxRjCWEi/zdXzQ=="],
 
     "@jridgewell/gen-mapping": ["@jridgewell/gen-mapping@0.3.13", "", { "dependencies": { "@jridgewell/sourcemap-codec": "^1.5.0", "@jridgewell/trace-mapping": "^0.3.24" } }, "sha512-2kkt/7niJ6MgEPxF0bYdQ6etZaA+fQvDcLKckhy1yIQOzaoKjBBjSj63/aLVjYE3qhRt5dvM+uUyfCg6UKCBbA=="],
 
@@ -598,6 +600,8 @@
     "spdx-ranges": ["spdx-ranges@2.1.1", "", {}, "sha512-mcdpQFV7UDAgLpXEE/jOMqvK4LBoO0uTQg0uvXUewmEFhpiZx5yJSZITHB8w1ZahKdhfZqP5GPEOKLyEq5p8XA=="],
 
     "spdx-satisfies": ["spdx-satisfies@5.0.1", "", { "dependencies": { "spdx-compare": "^1.0.0", "spdx-expression-parse": "^3.0.0", "spdx-ranges": "^2.0.0" } }, "sha512-Nwor6W6gzFp8XX4neaKQ7ChV4wmpSh2sSDemMFSzHxpTw460jxFYeOn+jq4ybnSSw/5sc3pjka9MQPouksQNpw=="],
+
+    "std-env": ["std-env@4.0.0-rc.1", "", {}, "sha512-2gE+MEGsqvDEjl7LqbrCEB3Lo6+Pmt8ULCIsutKTesFBzSuNIkiWPSy65sa7WrlLebc9LcfnS5eyj69mutUp1A=="],
 
     "streamx": ["streamx@2.23.0", "", { "dependencies": { "events-universal": "^1.0.0", "fast-fifo": "^1.3.2", "text-decoder": "^1.1.0" } }, "sha512-kn+e44esVfn2Fa/O0CPFcex27fjIL6MkVae0Mm6q+E6f0hWv578YCERbv+4m02cjxvDsPKLnmxral/rR6lBMAg=="],
 

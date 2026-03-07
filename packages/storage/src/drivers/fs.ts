@@ -9,7 +9,9 @@ export interface FSDriverOptions {
   ignore?: string | string[];
 }
 
-export default defineDriver((options: FSDriverOptions = {}): Driver<FSDriverOptions> => {
+type FSDriverFactory = ReturnType<typeof defineDriver<FSDriverOptions, undefined>>;
+
+const fsDriver: FSDriverFactory = defineDriver((options: FSDriverOptions = {}): Driver<FSDriverOptions> => {
   const base = options.base ? resolve(options.base) : resolve(".");
   const ignore = options.ignore || [];
 
@@ -98,3 +100,5 @@ export default defineDriver((options: FSDriverOptions = {}): Driver<FSDriverOpti
     },
   };
 });
+
+export default fsDriver;

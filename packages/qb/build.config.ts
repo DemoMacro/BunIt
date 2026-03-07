@@ -9,6 +9,7 @@ export default defineBuildConfig({
     {
       entrypoints: "./src/dialects/*.ts",
       outdir: "dist/dialects",
+      minify: true,
     },
   ],
 });

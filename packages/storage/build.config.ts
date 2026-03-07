@@ -9,6 +9,7 @@ export default defineBuildConfig({
     {
       entrypoints: "./src/drivers/*.ts",
       outdir: "dist/drivers",
+      minify: true,
     },
   ],
 });

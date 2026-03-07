@@ -9,7 +9,9 @@ export interface S3DriverOptions extends S3Options {
   base?: string;
 }
 
-export default defineDriver((options: S3DriverOptions): Driver<S3DriverOptions, S3Client> => {
+type S3DriverFactory = ReturnType<typeof defineDriver<S3DriverOptions, S3Client>>;
+
+const s3Driver: S3DriverFactory = defineDriver((options: S3DriverOptions): Driver<S3DriverOptions, S3Client> => {
   let client: S3Client | undefined;
 
   const getClient = () => {
@@ -138,3 +140,5 @@ export default defineDriver((options: S3DriverOptions): Driver<S3DriverOptions, 
     },
   };
 });
+
+export default s3Driver;
