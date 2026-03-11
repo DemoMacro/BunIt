@@ -39,9 +39,8 @@
   },
   "devDependencies": {
     "@bunit/build": "workspace:*",
-    "@funish/basis": "0.2.13",
+    "@funish/basis": "0.2.14",
     "@types/bun": "1.3.10",
-    "@types/node": "25.3.5",
-    "obuild": "0.4.31"
+    "@types/node": "25.3.5"
   }
 }
