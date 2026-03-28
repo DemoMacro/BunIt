@@ -1,4 +1,5 @@
-import { defineDriver, normalizeKey } from "unstorage";
+import { defineDriver } from "unstorage";
+import { normalizeKey } from "unstorage/drivers/utils/index";
 import type { Driver, GetKeysOptions, StorageMeta, TransactionOptions } from "unstorage";
 import { S3Client, type S3Options } from "bun";
 
@@ -22,7 +23,7 @@ const s3Driver: S3DriverFactory = defineDriver((options: S3DriverOptions): Drive
   };
 
   const base = (options.base || "").replace(/\/$/, "");
-  const p = (key: string) => (base ? `${base}/${normalizeKey(key)}` : normalizeKey(key));
+  const p = (key: string) => (base ? `${base}/${normalizeKey(key, "/")}` : normalizeKey(key, "/"));
   const d = (key: string) => (base ? key.replace(`${base}/`, "") : key);
 
   return {

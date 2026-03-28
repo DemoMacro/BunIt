@@ -1,4 +1,5 @@
-import { defineDriver, normalizeKey } from "unstorage";
+import { defineDriver } from "unstorage";
+import { joinKeys, normalizeKey } from "unstorage/drivers/utils/index";
 import type { Driver, GetKeysOptions, StorageMeta, TransactionOptions } from "unstorage";
 import { RedisClient, type RedisOptions } from "bun";
 
@@ -35,7 +36,7 @@ const redisDriver: RedisDriverFactory = defineDriver(
     };
 
     const base = (options.base || "").replace(/:$/, "");
-    const p = (key: string) => (base ? `${base}:${key}` : key);
+    const p = (...keys: string[]) => joinKeys(base, ...keys);
     const d = (key: string) => (base ? key.replace(`${base}:`, "") : key);
 
     return {
@@ -110,7 +111,7 @@ const redisDriver: RedisDriverFactory = defineDriver(
       async getKeys(baseKey: string, _opts?: GetKeysOptions) {
         const keys: string[] = [];
         let cursor = 0;
-        const pattern = p(baseKey + "*");
+        const pattern = p(baseKey, "*");
 
         do {
           const result = await getClient().scan(cursor, "MATCH", pattern);
