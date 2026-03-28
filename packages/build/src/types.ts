@@ -10,7 +10,7 @@ export interface BuildContext {
  * Build entry configuration extending Bun's BuildConfig
  * with the addition of stub mode support.
  */
-export interface BuildEntry extends Omit<BunBuildConfig, 'entrypoints'> {
+export interface BuildEntry extends Omit<BunBuildConfig, "entrypoints"> {
   /**
    * Entry point(s) to build. Supports glob patterns.
    */

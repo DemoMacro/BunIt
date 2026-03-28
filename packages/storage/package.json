@@ -1,6 +1,6 @@
 {
   "name": "@bunit/storage",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Universal storage abstraction with native Bun drivers for filesystem, Redis, and S3",
   "keywords": [
     "bun",
@@ -54,6 +54,6 @@
   "dependencies": {},
   "devDependencies": {},
   "peerDependencies": {
-    "unstorage": "^1.17.4"
+    "unstorage": "^2.0.0-alpha.7"
   }
 }

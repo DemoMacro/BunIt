@@ -31,7 +31,10 @@ export async function buildStub(ctx: BuildContext, entry: BuildEntry): Promise<v
 
   for (const srcPath of entrypoints) {
     // Get the base filename without extension
-    const fileName = srcPath.split(/[/\\]/).pop()!.replace(/\.(ts|tsx|js|jsx)$/, "");
+    const fileName = srcPath
+      .split(/[/\\]/)
+      .pop()!
+      .replace(/\.(ts|tsx|js|jsx)$/, "");
 
     // For custom outdir, use just the filename
     // For default outdir, use the full relative path structure

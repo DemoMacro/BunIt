@@ -1,6 +1,6 @@
-import { defineDriver } from "unstorage";
-import { normalizeKey } from "unstorage/drivers/utils/index";
-import type { Driver, GetKeysOptions, StorageMeta, TransactionOptions } from "unstorage";
+import type { GetKeysOptions, StorageMeta, TransactionOptions } from "unstorage";
+import type { DriverFactory } from "unstorage/drivers/utils/index";
+import { normalizeKey, createRequiredError } from "unstorage/drivers/utils/index";
 import { S3Client, type S3Options } from "bun";
 
 export interface S3DriverOptions extends S3Options {
@@ -10,30 +10,42 @@ export interface S3DriverOptions extends S3Options {
   base?: string;
 }
 
-type S3DriverFactory = ReturnType<typeof defineDriver<S3DriverOptions, S3Client>>;
+const DRIVER_NAME = "s3";
 
-const s3Driver: S3DriverFactory = defineDriver((options: S3DriverOptions): Driver<S3DriverOptions, S3Client> => {
+const s3Driver: DriverFactory<S3DriverOptions, S3Client> = (options) => {
   let client: S3Client | undefined;
 
   const getClient = () => {
     if (!client) {
+      if (!options.accessKeyId) {
+        throw createRequiredError(DRIVER_NAME, "accessKeyId");
+      }
+      if (!options.secretAccessKey) {
+        throw createRequiredError(DRIVER_NAME, "secretAccessKey");
+      }
+      if (!options.endpoint) {
+        throw createRequiredError(DRIVER_NAME, "endpoint");
+      }
+      if (!options.bucket) {
+        throw createRequiredError(DRIVER_NAME, "bucket");
+      }
       client = new S3Client(options);
     }
     return client;
   };
 
   const base = (options.base || "").replace(/\/$/, "");
-  const p = (key: string) => (base ? `${base}/${normalizeKey(key, "/")}` : normalizeKey(key, "/"));
+  const p = (key: string = "") =>
+    base ? `${base}/${normalizeKey(key, "/")}` : normalizeKey(key, "/");
   const d = (key: string) => (base ? key.replace(`${base}/`, "") : key);
 
   return {
-    name: "s3",
+    name: DRIVER_NAME,
     options,
     getInstance: getClient,
     async hasItem(key: string, _opts: TransactionOptions) {
       try {
-        const file = getClient().file(p(key));
-        await file.exists();
+        await getClient().file(p(key)).exists();
         return true;
       } catch {
         return false;
@@ -41,35 +53,30 @@ const s3Driver: S3DriverFactory = defineDriver((options: S3DriverOptions): Drive
     },
     async getItem(key: string, _opts?: TransactionOptions) {
       try {
-        const file = getClient().file(p(key));
-        return await file.text();
+        return await getClient().file(p(key)).text();
       } catch {
         return null;
       }
     },
     async getItemRaw(key: string, _opts: TransactionOptions) {
       try {
-        const file = getClient().file(p(key));
-        return await file.bytes();
+        return await getClient().file(p(key)).bytes();
       } catch {
         return null;
       }
     },
     async setItem(key: string, value: string, _opts: TransactionOptions) {
-      const file = getClient().file(p(key));
-      await file.write(value);
+      await getClient().file(p(key)).write(value);
     },
     async setItemRaw(
       key: string,
       value: ArrayBuffer | Uint8Array | string,
       _opts: TransactionOptions,
     ) {
-      const file = getClient().file(p(key));
-      await file.write(value);
+      await getClient().file(p(key)).write(value);
     },
     async removeItem(key: string, _opts: TransactionOptions) {
-      const file = getClient().file(p(key));
-      await file.delete();
+      await getClient().file(p(key)).delete();
     },
     async getMeta(key: string, _opts: TransactionOptions): Promise<StorageMeta | null> {
       try {
@@ -105,14 +112,11 @@ const s3Driver: S3DriverFactory = defineDriver((options: S3DriverOptions): Drive
 
         if (result.contents) {
           for (const object of result.contents) {
-            // Remove prefix to get relative key
             const relativeKey = d(object.key);
-            // Normalize the key
             keys.push(normalizeKey(relativeKey));
           }
         }
 
-        // Check if there are more results
         if (result.isTruncated && result.contents && result.contents.length > 0) {
           startAfter = result.contents[result.contents.length - 1].key;
         } else {
@@ -127,12 +131,9 @@ const s3Driver: S3DriverFactory = defineDriver((options: S3DriverOptions): Drive
       if (keys.length === 0) {
         return;
       }
-
-      // Delete all objects
       await Promise.allSettled(
         keys.map(async (key) => {
-          const file = getClient().file(p(key));
-          await file.delete();
+          await getClient().file(p(key)).delete();
         }),
       );
     },
@@ -140,6 +141,6 @@ const s3Driver: S3DriverFactory = defineDriver((options: S3DriverOptions): Drive
       client = undefined;
     },
   };
-});
+};
 
 export default s3Driver;

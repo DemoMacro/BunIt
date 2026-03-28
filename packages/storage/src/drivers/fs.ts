@@ -1,6 +1,6 @@
-import { defineDriver } from "unstorage";
+import type { GetKeysOptions, StorageMeta, TransactionOptions } from "unstorage";
+import type { DriverFactory } from "unstorage/drivers/utils/index";
 import { normalizeKey } from "unstorage/drivers/utils/index";
-import type { Driver, GetKeysOptions, StorageMeta, TransactionOptions } from "unstorage";
 import { mkdir, rm } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { Glob } from "bun";
@@ -10,19 +10,18 @@ export interface FSDriverOptions {
   ignore?: string | string[];
 }
 
-type FSDriverFactory = ReturnType<typeof defineDriver<FSDriverOptions, undefined>>;
+const DRIVER_NAME = "fs";
 
-const fsDriver: FSDriverFactory = defineDriver((options: FSDriverOptions = {}): Driver<FSDriverOptions> => {
+const fsDriver: DriverFactory<FSDriverOptions> = (options: FSDriverOptions = {}) => {
   const base = options.base ? resolve(options.base) : resolve(".");
   const ignore = options.ignore || [];
 
   return {
-    name: "fs",
+    name: DRIVER_NAME,
     options,
     hasItem(key: string, _opts: TransactionOptions) {
       const path = join(base, normalizeKey(key, "/"));
-      const file = Bun.file(path);
-      return file.exists();
+      return Bun.file(path).exists();
     },
     async getItem(key: string, _opts?: TransactionOptions) {
       const path = join(base, normalizeKey(key, "/"));
@@ -72,7 +71,6 @@ const fsDriver: FSDriverFactory = defineDriver((options: FSDriverOptions = {}): 
       const scanPath = baseKey ? join(base, normalizeKey(baseKey, "/")) : base;
 
       for await (const file of glob.scan(scanPath)) {
-        // Convert filesystem path back to normalized key format
         const relativePath = baseKey ? file.replace(normalizeKey(baseKey, "/") + "/", "") : file;
         const key = normalizeKey(relativePath);
 
@@ -100,6 +98,6 @@ const fsDriver: FSDriverFactory = defineDriver((options: FSDriverOptions = {}): 
       // No cleanup needed
     },
   };
-});
+};
 
 export default fsDriver;
