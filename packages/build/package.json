@@ -1,6 +1,6 @@
 {
   "name": "@bunit/build",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "A blazing-fast build tool powered by Bun for TypeScript libraries with flexible bundling and transformation modes",
   "keywords": [
     "build",
@@ -51,7 +51,7 @@
     "prepack": "bun run build"
   },
   "dependencies": {
-    "c12": "4.0.0-beta.3",
+    "c12": "4.0.0-beta.4",
     "citty": "0.2.1",
     "consola": "3.4.2",
     "defu": "6.1.4",
@@ -59,9 +59,9 @@
     "pkg-types": "^2.3.0",
     "pretty-bytes": "7.1.0",
     "unplugin-isolated-decl": "0.15.7",
-    "unplugin-oxc": "^0.5.7"
+    "unplugin-oxc": "^0.6.0"
   },
   "devDependencies": {
-    "typescript": "5.9.3"
+    "typescript": "6.0.2"
   }
 }

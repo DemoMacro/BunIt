@@ -1,6 +1,6 @@
 {
   "name": "@bunit/qb",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Kysely dialects powered by Bun's native SQL client for PostgreSQL, MySQL, and SQLite",
   "keywords": [
     "bun",

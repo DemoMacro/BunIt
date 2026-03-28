@@ -74,7 +74,7 @@ export class BunSQLDriver implements Driver {
   }
 }
 
-class BunSQLConnection implements DatabaseConnection {
+export class BunSQLConnection implements DatabaseConnection {
   #sql: SQL;
 
   constructor(sql: SQL) {
